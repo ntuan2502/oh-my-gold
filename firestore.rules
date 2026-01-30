@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Chỉ cho phép người dùng đọc/ghi dữ liệu CỦA CHÍNH HỌ
+    match /transactions/{transactionId} {
+      // Cho phép Đọc, Sửa, Xóa nếu userId của data trùng với userId đang đăng nhập
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Cho phép Tạo mới nếu userId gửi lên trùng với userId đang đăng nhập
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}

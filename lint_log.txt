@@ -1,0 +1,43 @@
+
+> temp_app@0.1.0 lint
+> eslint
+
+(node:35444) ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js": https://eslint.org/docs/latest/use/configure/migration-guide#ignoring-files
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+C:\Workspaces\Project\gold-tracker\src\app\api\gold-price\route.ts
+  10:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:43  warning  'i' is defined but never used             @typescript-eslint/no-unused-vars
+  60:46  warning  'el' is defined but never used            @typescript-eslint/no-unused-vars
+
+C:\Workspaces\Project\gold-tracker\src\app\page.tsx
+   77:9    warning  'currentPriceChi' is assigned a value but never used             @typescript-eslint/no-unused-vars
+  278:123  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  278:132  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Workspaces\Project\gold-tracker\src\components\layout\UserNav.tsx
+  14:18  warning  'User' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Workspaces\Project\gold-tracker\src\context\AuthContext.tsx
+  31:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Workspaces\Project\gold-tracker\src\context\AuthContext.tsx:31:17
+  29 |             const mockUser = localStorage.getItem("goldtracker_mock_user");
+  30 |             if (mockUser) {
+> 31 |                 setUser(JSON.parse(mockUser));
+     |                 ^^^^^^^ Avoid calling setState() directly within an effect
+  32 |             }
+  33 |             setLoading(false);
+  34 |             return;  react-hooks/set-state-in-effect
+  46:29  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  59:25  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  77:31  error  A `require()` style import is forbidden                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-require-imports
+
+Γ£û 11 problems (7 errors, 4 warnings)
+
