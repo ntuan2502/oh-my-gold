@@ -19,6 +19,7 @@ export interface Transaction {
     price: number; // Unit: VND per Chi
     date: string;
     totalValue: number;
+    brand?: string; // e.g., "SJC", "PNJ", "DOJI"
     note?: string; // Optional note
 }
 

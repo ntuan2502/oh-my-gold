@@ -4,8 +4,7 @@ import { GoldPrice } from "@/hooks/useGoldPrice";
 import { BarChart3, Coins, TrendingUp } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-
-const SUPPORTED_BRANDS = ["SJC", "DOJI", "PNJ", "Bảo Tín Minh Châu", "Bảo Tín Mạnh Hải", "Phú Quý", "Mi Hồng", "Ngọc Thẩm"];
+import { SUPPORTED_BRANDS } from "@/lib/constants";
 
 interface MarketPriceBoardProps {
     prices: GoldPrice[];
@@ -70,13 +69,24 @@ export function MarketPriceBoard({ prices, loading }: MarketPriceBoardProps) {
         return type.replace(/\s*\([^)]*\)/g, "").trim();
     };
 
+    const lastUpdated = useMemo(() => {
+        return prices.length > 0 ? prices[0].updated : null;
+    }, [prices]);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="flex items-center gap-2 text-lg font-semibold">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    Thị Trường Hôm Nay
-                </h3>
+                <div>
+                    <h3 className="flex items-center gap-2 text-lg font-semibold">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        Thị Trường Hôm Nay
+                    </h3>
+                    {lastUpdated && (
+                        <p className="text-xs text-muted-foreground mt-1 ml-7">
+                            Cập nhật lúc: {lastUpdated}
+                        </p>
+                    )}
+                </div>
 
                 {/* Brand Tabs */}
                 <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">

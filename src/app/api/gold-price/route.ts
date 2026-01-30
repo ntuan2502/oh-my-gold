@@ -9,7 +9,31 @@ export async function GET() {
 
         type Price = { type: string; buy: number; sell: number; updated: string };
         const prices: Price[] = [];
-        const now = new Date().toLocaleTimeString('vi-VN');
+        // 1. Extract Real Update Time
+        let sourceUpdatedTime = "";
+        try {
+            // Find any element containing "Cập nhật lúc"
+            // Usually it's in a div or span near the top
+            const updateElement = $('*:contains("Cập nhật lúc")').last(); // usage of :contains in cheerio
+            if (updateElement.length > 0) {
+                const text = updateElement.text().trim();
+                // Expected format: "Cập nhật lúc 14:50:22 30/01/2026"
+                // Extract just the time/date part if needed, or keep the whole string?
+                // User wants: "bê cái thời gian đó qua" -> Keep the time part.
+                // Regex to capture time and date: \d{2}:\d{2}(:\d{2})? \d{2}\/\d{2}\/\d{4}
+                const match = text.match(/(\d{2}:\d{2}(:\d{2})? \d{2}\/\d{2}\/\d{4})/);
+                if (match) {
+                    sourceUpdatedTime = match[0];
+                }
+            }
+        } catch (e) {
+            console.warn("Failed to scrape update time", e);
+        }
+
+        // Fallback to Server Time if scrape fails
+        if (!sourceUpdatedTime) {
+            sourceUpdatedTime = new Date().toLocaleString('vi-VN');
+        }
 
         // Strategy: Scrape Table 0 (Miếng) and Table 1 (Nhẫn)
         const tables = $('table');
@@ -48,7 +72,7 @@ export async function GET() {
                                 type: fullName,
                                 buy: cleanBuy * 1000,
                                 sell: cleanSell * 1000,
-                                updated: now
+                                updated: sourceUpdatedTime // Use scraped time
                             });
                         }
                     }
@@ -60,8 +84,7 @@ export async function GET() {
         if (prices.length === 0) {
             $('td:contains("SJC")').each(() => {
                 // ... (keep legacy logic as backup or remove if confident)
-                if (prices.length > 0) return; // Just get one if main table failed
-                // ... simplified backup logic ...
+                if (prices.length > 0) return; // Just get one if main-table failed
             });
         }
 

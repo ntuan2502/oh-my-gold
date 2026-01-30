@@ -37,7 +37,6 @@ export function PriceTicker() {
                                 <span className="text-[10px] uppercase tracking-wider opacity-70">Bán</span>
                                 <span className="text-foreground font-mono font-medium">{(price.sell / 10).toLocaleString()}</span>
                             </span>
-                            <TrendingUp className="h-3 w-3 text-green-600" />
                         </div>
                     ))}
                 </Marquee>

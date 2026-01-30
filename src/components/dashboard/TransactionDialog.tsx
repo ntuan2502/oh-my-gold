@@ -1,5 +1,6 @@
 "use client";
 
+import { SUPPORTED_BRANDS } from "@/lib/constants";
 import { usePortfolioStore, Transaction } from "@/store/portfolioStore";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
     // Form State
     const [type, setType] = useState<"buy" | "sell" | "gift_in" | "gift_out">("buy");
     const [goldType, setGoldType] = useState("sjc");
+    const [brand, setBrand] = useState("SJC");
     const [quantity, setQuantity] = useState("");
     const [price, setPrice] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -45,8 +47,9 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
         if (existingTransaction) {
             setType(existingTransaction.type);
             setGoldType(existingTransaction.goldType);
+            setBrand(existingTransaction.brand || "SJC");
             setQuantity(existingTransaction.quantity.toString());
-            setPrice(existingTransaction.price.toString());
+            setPrice(existingTransaction.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
             setDate(existingTransaction.date);
             setNote(existingTransaction.note || "");
         }
@@ -60,12 +63,13 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
 
         setLoading(true);
 
-        const priceClean = type.startsWith('gift') ? 0 : parseFloat(price.replace(/,/g, ""));
+        const priceClean = type.startsWith('gift') ? 0 : parseFloat(price.replace(/\./g, ""));
         const quantityClean = parseFloat(quantity);
 
         const transactionData = {
             type,
             goldType,
+            brand,
             quantity: quantityClean,
             price: priceClean,
             date,
@@ -154,13 +158,29 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                         <div className="space-y-2">
                             <Label>Loại vàng</Label>
                             <Select value={goldType} onValueChange={setGoldType}>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Chọn loại vàng" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="sjc">Vàng miếng SJC</SelectItem>
                                     <SelectItem value="nhan_9999">Nhẫn tròn 9999</SelectItem>
                                     <SelectItem value="jewelry">Vàng trang sức</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Thương hiệu</Label>
+                            <Select value={brand} onValueChange={setBrand}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Chọn thương hiệu" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SUPPORTED_BRANDS.map((b) => (
+                                        <SelectItem key={b} value={b}>
+                                            {b}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -179,10 +199,16 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                             <div className="space-y-2">
                                 <Label>Giá (VNĐ/CHỈ)</Label>
                                 <Input
-                                    type="number"
+                                    type="text"
                                     placeholder="0"
                                     value={type.startsWith('gift') ? '0' : price}
-                                    onChange={(e) => setPrice(e.target.value)}
+                                    onChange={(e) => {
+                                        // Remove non-digits
+                                        const rawValue = e.target.value.replace(/\D/g, "");
+                                        // Format with dots
+                                        const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                        setPrice(formattedValue);
+                                    }}
                                     disabled={type.startsWith('gift')}
                                     className={type.startsWith('gift') ? 'bg-muted text-muted-foreground' : ''}
                                 />

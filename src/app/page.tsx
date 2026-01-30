@@ -27,39 +27,53 @@ export default function Home() {
   const { totalQuantity, totalInvested, breakdown } = getHoldings(); // Quantity is in Chi
 
   // Valuation Logic: 
-  // 1. Group Holdings by Type
-  const holdingsByType: Record<string, number> = {};
+  // 1. Group Holdings by Type and Brand
+  const holdings: Record<string, number> = {}; // Key: "goldType:brand"
+
   transactions.forEach(t => {
     let qty = 0;
     if (t.type === 'buy' || t.type === 'gift_in') qty = t.quantity;
     else qty = -t.quantity;
 
-    holdingsByType[t.goldType] = (holdingsByType[t.goldType] || 0) + qty;
+    // Default brand to SJC if missing (legacy data)
+    const brand = t.brand || "SJC";
+    const key = `${t.goldType}:${brand}`; // e.g. "nhan_9999:PNJ"
+
+    holdings[key] = (holdings[key] || 0) + qty;
   });
 
   // 2. Calculate Total Asset Value
   let totalAssetValue = 0;
 
-  // Helper to find price
-  const findBuyPricePerChi = (typeKey: string) => {
-    let searchTerms: string[] = [];
-    if (typeKey === 'sjc') searchTerms = ["SJC (Miếng)", "SJC"];
-    else if (typeKey === 'nhan_9999') searchTerms = ["SJC (Nhẫn)", "PNJ (Nhẫn)", "Nhẫn"];
-    else if (typeKey === 'jewelry') searchTerms = ["PNJ (Nhẫn)", "Nhẫn"];
-    else searchTerms = ["SJC"];
+  // Helper to find price by Brand and Type
+  const findBuyPricePerChi = (key: string) => {
+    const [goldType, brand] = key.split(":");
 
-    for (const term of searchTerms) {
-      const match = prices.find(p => p.type.includes(term));
-      if (match && match.buy) {
-        return match.buy / 10;
-      }
-    }
+    // Construct search term based on Type + Brand
+    // Pattern: "Brand (Type)" e.g. "PNJ (Nhẫn)", "SJC (Miếng)"
+    let searchTerm = "";
+
+    if (goldType === "sjc") searchTerm = `${brand} (Miếng)`;
+    else if (goldType === "nhan_9999") searchTerm = `${brand} (Nhẫn)`;
+    else if (goldType === "jewelry") searchTerm = `${brand} (Nhẫn)`; // Approximation for jewelry usually follows Ring price or specific
+
+    // 1. Try Specific Brand Search
+    let match = prices.find(p => p.type.includes(searchTerm));
+    if (match && match.buy) return match.buy / 10;
+
+    // 2. Fallback: Try generic Type search if Brand specific fails (e.g. data source issue)
+    if (goldType === "sjc") match = prices.find(p => p.type.includes("SJC (Miếng)"));
+    else if (goldType === "nhan_9999") match = prices.find(p => p.type.includes("SJC (Nhẫn)") || p.type.includes("Nhẫn"));
+
+    if (match && match.buy) return match.buy / 10;
+
+    // 3. Last Resort
     return 8200000;
   };
 
-  Object.entries(holdingsByType).forEach(([type, qty]) => {
+  Object.entries(holdings).forEach(([key, qty]) => {
     if (qty > 0) {
-      totalAssetValue += qty * findBuyPricePerChi(type);
+      totalAssetValue += qty * findBuyPricePerChi(key);
     }
   });
 
@@ -111,7 +125,7 @@ export default function Home() {
             <div className="text-center md:text-right">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tổng Tài Sản</p>
               <p className="text-xl font-bold text-primary sm:text-2xl truncate">
-                {totalAssetValue.toLocaleString('vi-VN')} <span className="text-sm font-normal text-muted-foreground">₫</span>
+                {Math.round(totalAssetValue).toLocaleString('vi-VN')} <span className="text-sm font-normal text-muted-foreground">₫</span>
               </p>
             </div>
 
@@ -121,9 +135,12 @@ export default function Home() {
             {/* Profit/Loss */}
             <div className="text-center md:text-left">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Lợi Nhuận</p>
-              <div className={`flex items-center justify-center md:justify-start gap-1 font-bold ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {profitLoss >= 0 ? <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" /> : <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 rotate-180 shrink-0" />}
-                <span className="text-xl sm:text-2xl truncate">{Math.abs(profitLoss).toLocaleString('vi-VN')} <span className="text-sm font-normal">₫</span></span>
+              <div className={`flex items-center justify-center md:justify-start gap-1 font-bold ${profitLoss > 0 ? 'text-green-600' : profitLoss < 0 ? 'text-red-600' : 'text-foreground'}`}>
+                <span className="text-xl sm:text-2xl truncate">
+                  {profitLoss > 0 ? '+' : ''}{Math.round(profitLoss).toLocaleString('vi-VN')} <span className="text-sm font-normal">₫</span>
+                </span>
+                {profitLoss > 0 && <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />}
+                {profitLoss < 0 && <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 rotate-180 shrink-0" />}
               </div>
             </div>
           </div>
@@ -153,18 +170,24 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Vốn đầu tư</p>
-                <p className="text-xl font-bold">{breakdown?.buyCost.toLocaleString('vi-VN')} ₫</p>
+                <p className="text-xl font-bold">{Math.round(breakdown?.buyCost || 0).toLocaleString('vi-VN')} ₫</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Giá trị hiện tại</p>
-                <p className="text-xl font-bold text-primary">{buyValue.toLocaleString('vi-VN')} ₫</p>
+                <p className="text-xl font-bold text-primary">{Math.round(buyValue).toLocaleString('vi-VN')} ₫</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Lợi nhuận</p>
-                <p className={`text-xl font-bold ${buyPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {buyPL >= 0 ? '+' : ''}{buyPL.toLocaleString('vi-VN')} ₫
-                  <span className="text-xs ml-1 font-normal block">({buyPLPercent.toFixed(1)}%)</span>
-                </p>
+                <div className={`flex flex-col items-start ${buyPL > 0 ? 'text-green-600' : buyPL < 0 ? 'text-red-600' : 'text-foreground'}`}>
+                  <span className="text-xl font-bold">
+                    {buyPL > 0 ? '+' : ''}{Math.round(buyPL).toLocaleString('vi-VN')} ₫
+                  </span>
+                  <div className="flex items-center gap-1 text-xs font-normal opacity-80">
+                    {buyPL > 0 && <TrendingUp className="h-3 w-3" />}
+                    {buyPL < 0 && <TrendingUp className="h-3 w-3 rotate-180" />}
+                    <span>({buyPLPercent.toFixed(0)}%)</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -192,7 +215,7 @@ export default function Home() {
               </div>
               <div className="col-span-2">
                 <p className="text-sm text-muted-foreground">Giá trị tài sản</p>
-                <p className="text-2xl font-bold text-purple-600">{giftValue.toLocaleString('vi-VN')} ₫</p>
+                <p className="text-2xl font-bold text-purple-600">{Math.round(giftValue).toLocaleString('vi-VN')} ₫</p>
                 <p className="text-xs text-muted-foreground mt-1">Lãi ròng 100%</p>
               </div>
             </div>
