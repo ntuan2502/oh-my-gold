@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { cn } from "@/lib/utils";
+import { cn, formatVietnameseNumber, parseVietnameseNumber, formatThousands } from "@/lib/utils";
 
 interface TransactionDialogProps {
     existingTransaction?: Transaction;
@@ -52,12 +52,9 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
             setType(existingTransaction.type);
             setGoldType(existingTransaction.goldType);
             setBrand(existingTransaction.brand || "SJC");
-            // Format quantity with dots for thousands, comma for decimal
-            const qtyStr = existingTransaction.quantity.toString().replace('.', ',');
-            const [qtyInt, qtyDec] = qtyStr.split(',');
-            const qtyFormatted = qtyInt.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (qtyDec ? ',' + qtyDec : '');
-            setQuantity(qtyFormatted);
-            setPrice(existingTransaction.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+            // Format quantity and price using helpers
+            setQuantity(formatVietnameseNumber(existingTransaction.quantity));
+            setPrice(formatThousands(existingTransaction.price.toString()));
             setDate(existingTransaction.date);
             setNote(existingTransaction.note || "");
         }
@@ -77,8 +74,8 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
 
         setLoading(true);
 
-        const priceClean = type.startsWith('gift') ? 0 : parseFloat(price.replace(/\./g, ""));
-        const quantityClean = parseFloat(quantity.replace(/\./g, '').replace(',', '.'));
+        const priceClean = type.startsWith('gift') ? 0 : parseFloat(price.replace(/\./g, "")); // Keep simple remove dots for price int
+        const quantityClean = parseVietnameseNumber(quantity);
 
         const transactionData = {
             type,
@@ -234,7 +231,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                                         if (integerPart.length > 1 && integerPart.startsWith('0')) {
                                             integerPart = integerPart.replace(/^0+(?=\d)/, '');
                                         }
-                                        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                        integerPart = formatThousands(integerPart);
 
                                         const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
 
@@ -254,7 +251,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                                         // Remove non-digits
                                         const rawValue = e.target.value.replace(/\D/g, "");
                                         // Format with dots
-                                        const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                        const formattedValue = formatThousands(rawValue);
                                         setPrice(formattedValue);
                                         if (formErrors.price) setFormErrors({ ...formErrors, price: false });
                                     }}
