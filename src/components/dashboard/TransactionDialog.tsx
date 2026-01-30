@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface TransactionDialogProps {
     existingTransaction?: Transaction;
@@ -42,6 +43,9 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [note, setNote] = useState("");
 
+    // Validation State
+    const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+
     // Load data if editing
     useEffect(() => {
         if (existingTransaction) {
@@ -56,8 +60,14 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
     }, [existingTransaction, open]);
 
     const handleSubmit = async () => {
-        if (!quantity || (!price && !type.startsWith('gift'))) {
-            toast.error("Vui lòng nhập đầy đủ thông tin");
+        const errors: Record<string, boolean> = {};
+        if (!quantity) errors.quantity = true;
+        if (!price && !type.startsWith('gift')) errors.price = true;
+        if (!date) errors.date = true;
+
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            toast.error("Vui lòng nhập đầy đủ các trường bắt buộc");
             return;
         }
 
@@ -94,6 +104,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                 setQuantity("");
                 setPrice("");
                 setNote("");
+                setFormErrors({});
             }
         } catch (error) {
             console.error("Transaction Error:", error);
@@ -156,7 +167,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                         )}
 
                         <div className="space-y-2">
-                            <Label>Loại vàng</Label>
+                            <Label>Loại vàng <span className="text-red-500">*</span></Label>
                             <Select value={goldType} onValueChange={setGoldType}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Chọn loại vàng" />
@@ -170,7 +181,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Thương hiệu</Label>
+                            <Label>Thương hiệu <span className="text-red-500">*</span></Label>
                             <Select value={brand} onValueChange={setBrand}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Chọn thương hiệu" />
@@ -187,17 +198,21 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Khối lượng (CHỈ)</Label>
+                                <Label>Khối lượng (CHỈ) <span className="text-red-500">*</span></Label>
                                 <Input
                                     type="number"
                                     placeholder="5.0"
                                     step="0.1"
                                     value={quantity}
-                                    onChange={(e) => setQuantity(e.target.value)}
+                                    onChange={(e) => {
+                                        setQuantity(e.target.value);
+                                        if (formErrors.quantity) setFormErrors({ ...formErrors, quantity: false });
+                                    }}
+                                    className={cn(formErrors.quantity && "border-red-500 focus-visible:ring-red-500")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Giá (VNĐ/CHỈ)</Label>
+                                <Label>Giá (VNĐ/CHỈ) {!type.startsWith('gift') && <span className="text-red-500">*</span>}</Label>
                                 <Input
                                     type="text"
                                     placeholder="0"
@@ -208,19 +223,27 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                                         // Format with dots
                                         const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                                         setPrice(formattedValue);
+                                        if (formErrors.price) setFormErrors({ ...formErrors, price: false });
                                     }}
                                     disabled={type.startsWith('gift')}
-                                    className={type.startsWith('gift') ? 'bg-muted text-muted-foreground' : ''}
+                                    className={cn(
+                                        type.startsWith('gift') ? 'bg-muted text-muted-foreground' : '',
+                                        formErrors.price && "border-red-500 focus-visible:ring-red-500"
+                                    )}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Ngày giao dịch</Label>
+                            <Label>Ngày giao dịch <span className="text-red-500">*</span></Label>
                             <Input
                                 type="date"
                                 value={date}
-                                onChange={(e) => setDate(e.target.value)}
+                                onChange={(e) => {
+                                    setDate(e.target.value);
+                                    if (formErrors.date) setFormErrors({ ...formErrors, date: false });
+                                }}
+                                className={cn(formErrors.date && "border-red-500 focus-visible:ring-red-500")}
                             />
                         </div>
 

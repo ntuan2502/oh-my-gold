@@ -5,9 +5,20 @@ import { Transaction } from "@/store/portfolioStore";
 import { usePortfolioStore } from "@/store/portfolioStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, ArrowUpRight, ArrowDownRight, Gift, Trash2, Pencil } from "lucide-react";
+import { Search, Filter, ArrowUpRight, ArrowDownRight, Gift, Trash2, Pencil, HandHeart } from "lucide-react";
 import { TransactionDialog } from "./TransactionDialog";
 import { cn } from "@/lib/utils";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TransactionHistoryProps {
     transactions: Transaction[];
@@ -46,11 +57,7 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
         });
     }, [transactions, filterType, searchTerm, sortOrder]);
 
-    const handleDelete = async (id: string) => {
-        if (confirm("Bạn có chắc muốn xóa giao dịch này?")) {
-            await removeTransaction(id);
-        }
-    };
+
 
     return (
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
@@ -102,75 +109,111 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
                 ) : (
                     <div className="divide-y">
                         {filteredTransactions.map((t) => (
-                            <div key={t.id} className="group flex flex-col gap-4 p-4 hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between sm:p-6 transition-colors">
-                                {/* Left: Icon & Info */}
-                                <div className="flex items-start gap-4">
-                                    <div className={cn(
-                                        "mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:mt-0",
-                                        t.type === 'buy' ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
-                                            t.type === 'sell' ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" :
-                                                "bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
-                                    )}>
-                                        {t.type === 'buy' ? <ArrowDownRight className="h-5 w-5" /> :
-                                            t.type === 'sell' ? <ArrowUpRight className="h-5 w-5" /> :
-                                                <Gift className="h-5 w-5" />}
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-medium">
-                                                {t.type === 'buy' ? 'Mua vào' : t.type === 'sell' ? 'Bán ra' : t.type === 'gift_in' ? 'Được tặng' : 'Tặng quà'}
-                                            </p>
-                                            <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-foreground">
-                                                {t.goldType}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            {new Date(t.date).toLocaleDateString('vi-VN', { weekday: 'short', year: 'numeric', month: 'numeric', day: 'numeric' })}
-                                            <span className="mx-1">•</span>
-                                            {t.quantity} Chỉ
-                                        </p>
-                                        {t.note && (
-                                            <p className="text-xs italic text-muted-foreground/80">&quot;{t.note}&quot;</p>
-                                        )}
-                                    </div>
+                            <div key={t.id} className="relative group grid grid-cols-[auto_1fr_auto] gap-3 p-4 hover:bg-muted/50 transition-colors items-start sm:items-center sm:gap-6 sm:p-6">
+                                {/* 1. Icon (Left) */}
+                                <div className={cn(
+                                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full mt-1 sm:mt-0",
+                                    t.type === 'buy' ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
+                                        t.type === 'sell' ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" :
+                                            t.type === 'gift_in' ? "bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400" :
+                                                "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+                                )}>
+                                    {t.type === 'buy' ? <ArrowDownRight className="h-5 w-5" /> :
+                                        t.type === 'sell' ? <ArrowUpRight className="h-5 w-5" /> :
+                                            t.type === 'gift_in' ? <Gift className="h-5 w-5" /> :
+                                                <HandHeart className="h-5 w-5" />}
                                 </div>
 
-                                {/* Right: Value & Actions */}
-                                <div className="flex items-center justify-between gap-6 sm:justify-end">
+                                {/* 2. Info (Middle) */}
+                                <div className="space-y-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <p className="font-semibold text-sm sm:text-base">
+                                            {t.type === 'buy' ? 'Mua vào' : t.type === 'sell' ? 'Bán ra' : t.type === 'gift_in' ? 'Được tặng' : 'Tặng quà'}
+                                        </p>
+                                        <span className="inline-flex items-center rounded-full border border-border px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider bg-background/50">
+                                            {t.goldType === 'nhan_9999' ? 'Nhẫn 9999' : t.goldType === 'sjc' ? 'SJC' : 'Trang sức'}
+                                        </span>
+                                    </div>
+
+                                    {/* Mobile/Desktop Combined Subline */}
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                        <span className="whitespace-nowrap">
+                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                                        </span>
+                                        <span className="w-1 h-1 rounded-full bg-border" />
+                                        <span className="font-medium text-foreground/80">
+                                            {t.quantity} Chỉ
+                                        </span>
+                                        {t.brand && (
+                                            <>
+                                                <span className="w-1 h-1 rounded-full bg-border" />
+                                                <span className="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-400 dark:ring-blue-400/20">
+                                                    {t.brand}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {t.note && (
+                                        <p className="text-xs italic text-muted-foreground/70 truncate max-w-[200px] sm:max-w-xs">
+                                            {t.note}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* 3. Value & Actions (Right) */}
+                                <div className="flex flex-col items-end gap-1 sm:gap-2">
                                     <div className="text-right">
                                         <p className={cn(
-                                            "font-bold tabular-nums",
-                                            t.type === 'buy' ? "text-foreground" : // Buy = Spend Money (Neutral/Negative context?) -> Actually usually just text-foreground or red usually means expense. user requested modern style.
+                                            "font-bold text-sm sm:text-base tabular-nums leading-tight",
+                                            t.type === 'buy' ? "text-red-600 dark:text-red-400" :
                                                 t.type === 'sell' ? "text-emerald-600" :
-                                                    "text-purple-600"
+                                                    t.type === 'gift_in' ? "text-purple-600" :
+                                                        "text-orange-600"
                                         )}>
                                             {t.type === 'buy' ? '-' : t.type === 'sell' ? '+' : ''}
-                                            {t.totalValue.toLocaleString('vi-VN')} ₫
+                                            {t.totalValue.toLocaleString('vi-VN')} <span className="text-[10px] font-normal text-muted-foreground">₫</span>
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {t.price > 0 ? `${t.price.toLocaleString('vi-VN')} ₫/Chỉ` : 'Miễn phí'}
+                                        <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                            {t.price > 0 ? `${t.price.toLocaleString('vi-VN')} ₫/Chỉ` : '0 ₫'}
                                         </p>
                                     </div>
 
-                                    {/* Action Buttons (Visible on Hover/Focus) */}
-                                    <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                    {/* Action Buttons: Always visible on mobile, hover on desktop */}
+                                    <div className="flex gap-1 mt-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                         <TransactionDialog
                                             existingTransaction={t}
                                             trigger={
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background hover:shadow-sm">
-                                                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-background hover:shadow-sm">
+                                                    <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                                                 </Button>
                                             }
                                         />
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                                            onClick={() => handleDelete(t.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-destructive/10 hover:text-destructive"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Xóa giao dịch?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Hành động này không thể hoàn tác. Giao dịch này sẽ bị xóa vĩnh viễn khỏi lịch sử của bạn.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => removeTransaction(t.id)} className="bg-red-600 hover:bg-red-700 text-white">
+                                                        Xóa vĩnh viễn
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </div>
                             </div>
