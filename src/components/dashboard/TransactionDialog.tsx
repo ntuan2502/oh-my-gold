@@ -52,7 +52,11 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
             setType(existingTransaction.type);
             setGoldType(existingTransaction.goldType);
             setBrand(existingTransaction.brand || "SJC");
-            setQuantity(existingTransaction.quantity.toString());
+            // Format quantity with dots for thousands, comma for decimal
+            const qtyStr = existingTransaction.quantity.toString().replace('.', ',');
+            const [qtyInt, qtyDec] = qtyStr.split(',');
+            const qtyFormatted = qtyInt.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (qtyDec ? ',' + qtyDec : '');
+            setQuantity(qtyFormatted);
             setPrice(existingTransaction.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
             setDate(existingTransaction.date);
             setNote(existingTransaction.note || "");
@@ -74,7 +78,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
         setLoading(true);
 
         const priceClean = type.startsWith('gift') ? 0 : parseFloat(price.replace(/\./g, ""));
-        const quantityClean = parseFloat(quantity);
+        const quantityClean = parseFloat(quantity.replace(/\./g, '').replace(',', '.'));
 
         const transactionData = {
             type,
@@ -200,12 +204,31 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                             <div className="space-y-2">
                                 <Label>Khối lượng (CHỈ) <span className="text-red-500">*</span></Label>
                                 <Input
-                                    type="number"
-                                    placeholder="5.0"
-                                    step="0.1"
+                                    type="text"
+                                    placeholder="0,5"
+                                    inputMode="decimal"
                                     value={quantity}
                                     onChange={(e) => {
-                                        setQuantity(e.target.value);
+                                        // Allow digits and one comma
+                                        const rawValue = e.target.value;
+
+                                        // Only allow digits and ',' and '.' (dots might be pasted or user typed, we'll strip them)
+                                        const cleanValue = rawValue.replace(/[^0-9,]/g, '');
+
+                                        // Ensure only one comma
+                                        const parts = cleanValue.split(',');
+                                        if (parts.length > 2) return; // More than one comma
+
+                                        // Format integer part: remove leading zeros (01 -> 1) then add dots
+                                        let integerPart = parts[0];
+                                        if (integerPart.length > 1 && integerPart.startsWith('0')) {
+                                            integerPart = integerPart.replace(/^0+(?=\d)/, '');
+                                        }
+                                        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+                                        const decimalPart = parts.length > 1 ? ',' + parts[1] : '';
+
+                                        setQuantity(integerPart + decimalPart);
                                         if (formErrors.quantity) setFormErrors({ ...formErrors, quantity: false });
                                     }}
                                     className={cn(formErrors.quantity && "border-red-500 focus-visible:ring-red-500")}

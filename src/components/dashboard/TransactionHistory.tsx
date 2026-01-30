@@ -142,7 +142,7 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
                                         </span>
                                         <span className="w-1 h-1 rounded-full bg-border" />
                                         <span className="font-medium text-foreground/80">
-                                            {t.quantity} Chỉ
+                                            {t.quantity.toString().replace('.', ',')} Chỉ
                                         </span>
                                         {t.brand && (
                                             <>

@@ -166,7 +166,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Khối lượng</p>
-                <p className="text-xl font-bold">{breakdown?.buyQty.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">Chỉ</span></p>
+                <p className="text-xl font-bold">{breakdown?.buyQty.toFixed(1).replace('.', ',')} <span className="text-sm font-normal text-muted-foreground">Chỉ</span></p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Vốn đầu tư</p>
@@ -207,7 +207,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Khối lượng</p>
-                <p className="text-xl font-bold">{breakdown?.giftQty.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">Chỉ</span></p>
+                <p className="text-xl font-bold">{breakdown?.giftQty.toFixed(1).replace('.', ',')} <span className="text-sm font-normal text-muted-foreground">Chỉ</span></p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Vốn gốc</p>

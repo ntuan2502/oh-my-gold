@@ -180,7 +180,7 @@ export function MarketPriceBoard({ prices, loading }: MarketPriceBoardProps) {
                                 <h4 className="flex items-center gap-2 font-semibold text-amber-700">
                                     <BarChart3 className="h-4 w-4" /> Giá Tốt Nhất (Miếng)
                                 </h4>
-                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 uppercase">Recommendation</span>
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 uppercase">Gợi Ý</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
@@ -208,7 +208,7 @@ export function MarketPriceBoard({ prices, loading }: MarketPriceBoardProps) {
                                 <h4 className="flex items-center gap-2 font-semibold text-rose-700">
                                     <Coins className="h-4 w-4" /> Giá Tốt Nhất (Nhẫn)
                                 </h4>
-                                <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700 uppercase">Recommendation</span>
+                                <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700 uppercase">Gợi Ý</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
