@@ -64,7 +64,7 @@ async function fetchAndFormat(id: number, type: string, from: string, to: string
                 buy: item.BuyValue / 10,
                 sell: item.SellValue / 10
             };
-        }).filter((item): item is FormattedItem => item !== null);
+        }).filter((item: FormattedItem | null): item is FormattedItem => item !== null);
 
     } catch (e) {
         console.error(`Fetch Error for ${type}:`, e);
