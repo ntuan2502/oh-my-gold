@@ -33,7 +33,7 @@ export function Header() {
                         <Coins className="h-6 w-6 text-primary" />
                     </div>
                     <Link href="/" className="text-xl font-bold tracking-tight text-foreground">
-                        Gold<span className="text-primary">Tracker</span>
+                        OhMy<span className="text-primary">Gold</span>
                     </Link>
                 </div>
 

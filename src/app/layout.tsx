@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GoldTracker - Sổ Vàng Tích Sản",
-  description: "Quản lý tài sản vàng hiệu quả, thông minh",
+  title: "OhMyGold - Đu đỉnh hôm nay, Đại gia ngày mai",
+  description: "Sổ Vàng Tích Sản - Quản lý tài sản vàng hiệu quả, thông minh",
 };
 
 export default function RootLayout({

@@ -1,8 +1,10 @@
-# GoldTracker - Sổ Vàng Tích Sản 🏆
+# OhMyGold - Sổ Vàng Tích Sản 🏆
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg) ![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black.svg) ![React](https://img.shields.io/badge/React-19-blue.svg) ![Bun](https://img.shields.io/badge/Bun-Fast-orange.svg)
+> **_Đu đỉnh hôm nay, Đại gia ngày mai_** 🚀
 
-**GoldTracker** là ứng dụng web quản lý danh mục đầu tư vàng cá nhân hiện đại, giúp bạn theo dõi tài sản, cập nhật giá thị trường real-time và tối ưu lợi nhuận đầu tư.
+![Version](https://img.shields.io/badge/version-1.0.2-blue.svg) ![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black.svg) ![React](https://img.shields.io/badge/React-19-blue.svg) ![Bun](https://img.shields.io/badge/Bun-Fast-orange.svg)
+
+**OhMyGold** là ứng dụng web quản lý danh mục đầu tư vàng cá nhân hiện đại, giúp bạn theo dõi tài sản, cập nhật giá thị trường real-time và tối ưu lợi nhuận đầu tư.
 
 ## 🌟 Tính Năng Nổi Bật
 
@@ -67,7 +69,7 @@ Truy cập `http://localhost:3000` để trải nghiệm.
 Đây là tính năng bảo mật của Firebase. Để fix:
 1. Truy cập [Firebase Console](https://console.firebase.google.com/).
 2. Vào **Authentication** -> **Settings** -> **Authorized domains**.
-3. Nhấn **Add domain** và thêm domain của bạn (ví dụ: `gold-tracker.vercel.app`).
+3. Nhấn **Add domain** và thêm domain của bạn (ví dụ: `ohmygold.vercel.app`).
 
 ## 📄 License
 MIT License.
