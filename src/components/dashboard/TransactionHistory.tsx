@@ -40,7 +40,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { SUPPORTED_BRANDS } from "@/lib/constants";
+import { SUPPORTED_BRANDS, GOLD_TYPES } from "@/lib/constants";
 
 const MobileNote = ({ note }: { note: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -161,9 +161,9 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Tất cả SP</SelectItem>
-                                <SelectItem value="sjc">SJC</SelectItem>
-                                <SelectItem value="nhan_9999">Nhẫn 9999</SelectItem>
-                                <SelectItem value="jewelry">Trang sức</SelectItem>
+                                {GOLD_TYPES.map(g => (
+                                    <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
 
@@ -218,7 +218,7 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
                                                     {t.type === 'buy' ? 'Mua vào' : t.type === 'sell' ? 'Bán ra' : t.type === 'gift_in' ? 'Được tặng' : 'Tặng quà'}
                                                 </p>
                                                 <span className="inline-flex items-center rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-background/50">
-                                                    {t.goldType === 'nhan_9999' ? 'Nhẫn 9999' : t.goldType === 'sjc' ? 'SJC' : 'Trang sức'}
+                                                    {GOLD_TYPES.find(g => g.value === t.goldType || (t.goldType === 'sjc' && g.value === 'bar'))?.label || t.goldType}
                                                 </span>
                                             </div>
 
@@ -335,7 +335,7 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
                                             <TableCell>
                                                 <div className="flex flex-col gap-1 items-start">
                                                     <span className="inline-flex items-center rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-background/50">
-                                                        {t.goldType === 'nhan_9999' ? 'Nhẫn 9999' : t.goldType === 'sjc' ? 'SJC' : 'Trang sức'}
+                                                        {GOLD_TYPES.find(g => g.value === t.goldType || (t.goldType === 'sjc' && g.value === 'bar'))?.label || t.goldType}
                                                     </span>
                                                     {t.brand && (
                                                         <span className="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-400 dark:ring-blue-400/20">

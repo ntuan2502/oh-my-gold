@@ -1,5 +1,11 @@
 export const SUPPORTED_BRANDS = ["SJC", "DOJI", "PNJ", "Bảo Tín Minh Châu", "Bảo Tín Mạnh Hải", "Phú Quý", "Mi Hồng", "Ngọc Thẩm"];
 
+export const GOLD_TYPES = [
+    { value: "bar", label: "Vàng miếng" },
+    { value: "nhan_9999", label: "Nhẫn tròn 9999" },
+    { value: "jewelry", label: "Vàng trang sức" }
+];
+
 export const SCRAPER_CONFIG = {
     URL: "https://giavang.org/",
     UNIT_MULTIPLIER: 1000 // Convert to VND/Chi if source is different or standardizes usage

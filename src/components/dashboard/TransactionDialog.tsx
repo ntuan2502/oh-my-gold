@@ -1,6 +1,6 @@
 "use client";
 
-import { SUPPORTED_BRANDS } from "@/lib/constants";
+import { SUPPORTED_BRANDS, GOLD_TYPES } from "@/lib/constants";
 import { usePortfolioStore, Transaction } from "@/store/portfolioStore";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
 
     // Form State
     const [type, setType] = useState<"buy" | "sell" | "gift_in" | "gift_out">("buy");
-    const [goldType, setGoldType] = useState("sjc");
+    const [goldType, setGoldType] = useState("bar");
     const [brand, setBrand] = useState("SJC");
     const [quantity, setQuantity] = useState("");
     const [price, setPrice] = useState("");
@@ -50,7 +50,7 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
     useEffect(() => {
         if (existingTransaction) {
             setType(existingTransaction.type);
-            setGoldType(existingTransaction.goldType);
+            setGoldType(existingTransaction.goldType === 'sjc' ? 'bar' : existingTransaction.goldType);
             setBrand(existingTransaction.brand || "SJC");
             // Format quantity and price using helpers
             setQuantity(formatVietnameseNumber(existingTransaction.quantity));
@@ -178,15 +178,15 @@ export function TransactionDialog({ existingTransaction, trigger }: TransactionD
                         )}
 
                         <div className="space-y-2">
-                            <Label>Loại vàng <span className="text-red-500">*</span></Label>
+                            <Label>Sản phẩm <span className="text-red-500">*</span></Label>
                             <Select value={goldType} onValueChange={setGoldType}>
                                 <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Chọn loại vàng" />
+                                    <SelectValue placeholder="Chọn sản phẩm" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="sjc">Vàng miếng SJC</SelectItem>
-                                    <SelectItem value="nhan_9999">Nhẫn tròn 9999</SelectItem>
-                                    <SelectItem value="jewelry">Vàng trang sức</SelectItem>
+                                    {GOLD_TYPES.map((type) => (
+                                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
