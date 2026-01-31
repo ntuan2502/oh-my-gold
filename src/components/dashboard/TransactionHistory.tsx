@@ -49,14 +49,14 @@ const MobileNote = ({ note }: { note: string }) => {
     if (note.length <= maxLength) {
         return (
             <div className="mt-1 pl-[52px] text-xs text-muted-foreground italic break-words relative z-10">
-                "{note}"
+                &quot;{note}&quot;
             </div>
         );
     }
 
     return (
         <div className="mt-1 pl-[52px] text-xs text-muted-foreground italic break-words relative z-10">
-            "{isExpanded ? note : `${note.slice(0, maxLength)}...`}"
+            &quot;{isExpanded ? note : `${note.slice(0, maxLength)}...`}&quot;
             <button
                 onClick={(e) => {
                     e.stopPropagation();
