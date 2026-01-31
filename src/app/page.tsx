@@ -68,7 +68,7 @@ export default function Home() {
     if (match && match.buy) return match.buy / 10;
 
     // 3. Last Resort
-    return 8200000;
+    return 0;
   };
 
   Object.entries(holdings).forEach(([key, qty]) => {
