@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 
+import { SUPPORTED_BRANDS, SCRAPER_CONFIG } from '@/lib/constants';
+
 export async function GET() {
     try {
-        const { data } = await axios.get('https://giavang.org/');
+        const { data } = await axios.get(SCRAPER_CONFIG.URL);
         const $ = cheerio.load(data);
 
         type Price = { type: string; buy: number; sell: number; updated: string };
@@ -53,8 +55,8 @@ export async function GET() {
                 const buy = $(cols[1]).text().trim();
                 const sell = $(cols[2]).text().trim();
 
-                const validBrands = ["SJC", "PNJ", "DOJI", "Mi Hồng", "Bảo Tín", "Phú Quý", "Ngọc Thẩm"];
-                const isRelevant = validBrands.some(b => brand.includes(b));
+                // Use centralized supported brands
+                const isRelevant = SUPPORTED_BRANDS.some(b => brand.includes(b));
 
                 if (isRelevant && buy && sell) {
                     const cleanBuy = parseFloat(buy.replace(/\./g, '').replace(/,/g, ''));
@@ -70,8 +72,8 @@ export async function GET() {
                         if (!exists) {
                             prices.push({
                                 type: fullName,
-                                buy: cleanBuy * 1000,
-                                sell: cleanSell * 1000,
+                                buy: cleanBuy * SCRAPER_CONFIG.UNIT_MULTIPLIER,
+                                sell: cleanSell * SCRAPER_CONFIG.UNIT_MULTIPLIER,
                                 updated: sourceUpdatedTime // Use scraped time
                             });
                         }

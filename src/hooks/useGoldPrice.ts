@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { REFRESH_INTERVAL } from "@/lib/constants";
 
 // Types for Gold Price Data
 export interface GoldPrice {
@@ -47,7 +48,7 @@ export const useGoldPrice = () => {
 
     useEffect(() => {
         fetchPrices();
-        const interval = setInterval(fetchPrices, 60000); // 1 minute refresh for server efficiency
+        const interval = setInterval(fetchPrices, REFRESH_INTERVAL); // Centralized interval
         return () => clearInterval(interval);
     }, []);
 
