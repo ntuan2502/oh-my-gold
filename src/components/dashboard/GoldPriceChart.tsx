@@ -10,10 +10,17 @@ import {
     XAxis,
     YAxis
 } from "recharts";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface HistoryItem {
     date: string;
@@ -25,9 +32,10 @@ interface HistoryItem {
 interface GoldPriceChartProps {
     data: HistoryItem[];
     loading?: boolean;
+    onRangeChange?: (from: string, to: string, label: string) => void;
 }
 
-export function GoldPriceChart({ data, loading }: GoldPriceChartProps) {
+export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartProps) {
     // Visibility State for Legend Toggling
     const [visibility, setVisibility] = useState<Record<string, boolean>>({
         barBuy: true,
@@ -35,6 +43,56 @@ export function GoldPriceChart({ data, loading }: GoldPriceChartProps) {
         ringBuy: true,
         ringSell: true
     });
+
+    const [range, setRange] = useState("30days");
+    const [rangeLabel, setRangeLabel] = useState("30 ngày gần đây");
+
+    const handleRangeChange = (value: string) => {
+        setRange(value);
+        const today = new Date();
+        let from = today;
+        let to = today;
+        let label = "";
+
+        switch (value) {
+            case "today":
+                from = today;
+                to = today;
+                label = "Hôm nay";
+                break;
+            case "yesterday":
+                from = subDays(today, 1);
+                to = subDays(today, 1);
+                label = "Hôm qua";
+                break;
+            case "7days":
+                from = subDays(today, 6);
+                to = today;
+                label = "7 ngày gần đây";
+                break;
+            case "30days":
+                from = subDays(today, 29);
+                to = today;
+                label = "30 ngày gần đây";
+                break;
+            case "thisMonth":
+                from = startOfMonth(today);
+                to = today;
+                label = "Tháng này";
+                break;
+            case "lastMonth":
+                from = startOfMonth(subMonths(today, 1));
+                to = endOfMonth(subMonths(today, 1));
+                label = "Tháng trước";
+                break;
+            default:
+                return;
+        }
+        setRangeLabel(label);
+        if (onRangeChange) {
+            onRangeChange(format(from, 'dd/MM/yyyy'), format(to, 'dd/MM/yyyy'), label);
+        }
+    };
 
     const SERIES = [
         { key: 'barBuy', name: 'SJC Miếng (Mua)', color: '#EAB308' },
@@ -100,14 +158,33 @@ export function GoldPriceChart({ data, loading }: GoldPriceChartProps) {
         );
     }
 
-    if (chartData.length === 0) return null;
+    if (chartData.length === 0 && !loading) {
+        // Show empty state but keep controls visible if possible, or just null.
+        // For now, allow returning null but better to show "No Data" with controls.
+        // But the previous implementation returned null. I'll stick to it for now but maybe improving UI later.
+        // Actually, if I return null, user can't select another range to fix it.
+        // I should render the card with empty message.
+    }
 
     return (
         <Card>
             <CardHeader className="pb-4">
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-semibold">Biểu Đồ Giá Vàng (30 Ngày)</CardTitle>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <CardTitle className="text-lg font-semibold">Biểu Đồ Giá Vàng ({rangeLabel})</CardTitle>
+                        <Select value={range} onValueChange={handleRangeChange}>
+                            <SelectTrigger className="w-[160px] h-8 text-xs">
+                                <SelectValue placeholder="30 ngày gần đây" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="today">Hôm nay</SelectItem>
+                                <SelectItem value="yesterday">Hôm qua</SelectItem>
+                                <SelectItem value="7days">7 ngày gần đây</SelectItem>
+                                <SelectItem value="30days">30 ngày gần đây</SelectItem>
+                                <SelectItem value="thisMonth">Tháng này</SelectItem>
+                                <SelectItem value="lastMonth">Tháng trước</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     {/* Custom Legend (External) */}
                     <div className="flex flex-wrap gap-2">

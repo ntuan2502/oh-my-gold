@@ -40,6 +40,11 @@ export default function Home() {
     fetchAndSyncHistory(from, to);
   }, [fetchAndSyncHistory]);
 
+  // Handle Chart Range Change
+  const handleRangeChange = (from: string, to: string) => {
+    fetchAndSyncHistory(from, to);
+  };
+
   // Calculate Dynamic Data
   const { totalQuantity, totalInvested, breakdown } = getHoldings(); // Quantity is in Chi
 
@@ -166,7 +171,11 @@ export default function Home() {
         <MarketPriceBoard prices={prices} loading={false} />
 
         {/* 2. Gold Price History Chart */}
-        <GoldPriceChart data={historyData} loading={historyLoading} />
+        <GoldPriceChart
+          data={historyData}
+          loading={historyLoading}
+          onRangeChange={handleRangeChange}
+        />
 
         {/* 2. Portfolio Breakdown */}
         <div className="grid gap-4 md:grid-cols-2">
