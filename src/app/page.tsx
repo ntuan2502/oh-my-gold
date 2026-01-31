@@ -4,17 +4,21 @@ import { PriceTicker } from "@/components/dashboard/PriceTicker";
 import { TransactionDialog } from "@/components/dashboard/TransactionDialog";
 import { Button } from "@/components/ui/button";
 import { MarketPriceBoard } from "@/components/dashboard/MarketPriceBoard";
+import { GoldPriceChart } from "@/components/dashboard/GoldPriceChart";
 import { TransactionHistory } from "@/components/dashboard/TransactionHistory";
 import { ArrowRight, Coins, TrendingUp, PiggyBank, Plus } from "lucide-react";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePortfolioStore } from "@/store/portfolioStore";
 import { useGoldPrice } from "@/hooks/useGoldPrice";
+import { useGoldHistory } from "@/hooks/useGoldHistory";
+import { subDays, format } from "date-fns";
 
 export default function Home() {
   const { user, login } = useAuth();
   const { getHoldings, transactions, fetchTransactions } = usePortfolioStore();
   const { prices } = useGoldPrice();
+  const { fetchAndSyncHistory, historyData, loading: historyLoading } = useGoldHistory();
 
   // Load Transactions on User Change
   useEffect(() => {
@@ -22,6 +26,19 @@ export default function Home() {
       fetchTransactions(user.uid);
     }
   }, [user, fetchTransactions]);
+
+  // Sync Gold History (Client-side)
+  useEffect(() => {
+    // Sync last 30 days on session start
+    // In production, we might want to check if sync is needed (timestamp in local storage)
+    const today = new Date();
+    const thirtyDaysAgo = subDays(today, 30);
+
+    const to = format(today, 'dd/MM/yyyy');
+    const from = format(thirtyDaysAgo, 'dd/MM/yyyy');
+
+    fetchAndSyncHistory(from, to);
+  }, [fetchAndSyncHistory]);
 
   // Calculate Dynamic Data
   const { totalQuantity, totalInvested, breakdown } = getHoldings(); // Quantity is in Chi
@@ -147,6 +164,9 @@ export default function Home() {
 
         {/* 1. Market Prices Section */}
         <MarketPriceBoard prices={prices} loading={false} />
+
+        {/* 2. Gold Price History Chart */}
+        <GoldPriceChart data={historyData} loading={historyLoading} />
 
         {/* 2. Portfolio Breakdown */}
         <div className="grid gap-4 md:grid-cols-2">
