@@ -123,9 +123,9 @@ export function DataManagement() {
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="hidden lg:flex gap-2">
+                    <Button variant="outline" size="sm" className="flex gap-2 px-3">
                         <FileJson className="h-4 w-4" />
-                        Dữ liệu
+                        <span>Dữ liệu</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -141,15 +141,6 @@ export function DataManagement() {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile Icon Only - Optional or included in main menu? 
-                For now we only show it on desktop inside History header or somewhere similar.
-                Actually we can make it visible on mobile as an icon button.
-            */}
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={handleExport}>
-                <Download className="h-5 w-5 text-muted-foreground" />
-            </Button>
-            {/* Import on mobile might be tricky if via same button, better separate or menu */}
         </>
     );
 }

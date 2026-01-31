@@ -124,16 +124,21 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
             {/* Header with Search & Controls */}
             <div className="flex flex-col gap-4 border-b p-6 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <h3 className="text-xl font-semibold">Lịch Sử Giao Dịch</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Hiển thị {filteredTransactions.length}/{transactions.length} giao dịch
-                    </p>
+                <div className="flex items-start justify-between w-full lg:w-auto">
+                    <div>
+                        <h3 className="text-xl font-semibold">Lịch Sử Giao Dịch</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Hiển thị {filteredTransactions.length}/{transactions.length} giao dịch
+                        </p>
+                    </div>
+                    <div className="lg:hidden">
+                        <DataManagement />
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                     {/* Data Tools */}
-                    <div className="flex justify-end lg:order-last">
+                    <div className="hidden lg:flex justify-end lg:order-last">
                         <DataManagement />
                     </div>
 
