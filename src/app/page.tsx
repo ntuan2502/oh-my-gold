@@ -49,30 +49,24 @@ export default function Home() {
   const { totalQuantity, totalInvested, breakdown } = getHoldings(); // Quantity is in Chi
 
   // Valuation Logic: 
-  // 1. Group Holdings by Type and Brand
-  const holdings: Record<string, number> = {}; // Key: "goldType:brand"
+  // Calculate value by matching specific Type/Brand from transactions to current Market Buy Price.
+
+  const investMap: Record<string, number> = {};
+  const giftMap: Record<string, number> = {};
 
   transactions.forEach(t => {
-    let qty = 0;
-    if (t.type === 'buy' || t.type === 'gift_in') qty = t.quantity;
-    else qty = -t.quantity;
-
-    // Default brand to SJC if missing (legacy data)
     const brand = t.brand || "SJC";
-    const key = `${t.goldType}:${brand}`; // e.g. "nhan_9999:PNJ"
+    const key = `${t.goldType}:${brand}`;
 
-    holdings[key] = (holdings[key] || 0) + qty;
+    if (t.type === 'buy') investMap[key] = (investMap[key] || 0) + t.quantity;
+    else if (t.type === 'sell') investMap[key] = (investMap[key] || 0) - t.quantity;
+    else if (t.type === 'gift_in') giftMap[key] = (giftMap[key] || 0) + t.quantity;
+    else if (t.type === 'gift_out') giftMap[key] = (giftMap[key] || 0) - t.quantity;
   });
-
-  // 2. Calculate Total Asset Value
-  let totalAssetValue = 0;
 
   // Helper to find price by Brand and Type
   const findBuyPricePerChi = (key: string) => {
     const [goldType, brand] = key.split(":");
-
-    // Construct search term based on Type + Brand
-    // Pattern: "Brand (Type)" e.g. "PNJ (Nhẫn)", "SJC (Miếng)"
     let searchTerm = "";
 
     if (goldType === "bar") searchTerm = `${brand} (Miếng)`;
@@ -82,26 +76,30 @@ export default function Home() {
     let match = prices.find(p => p.type.includes(searchTerm));
     if (match && match.buy) return match.buy / 10;
 
-    // 2. Fallback: Try generic Type search if Brand specific fails (e.g. data source issue)
+    // 2. Fallback: Try generic Type search
     if (goldType === "bar") match = prices.find(p => p.type.includes("SJC (Miếng)"));
     else if (goldType === "ring_9999") match = prices.find(p => p.type.includes("SJC (Nhẫn)") || p.type.includes("Nhẫn"));
 
     if (match && match.buy) return match.buy / 10;
-
-    // 3. Last Resort
     return 0;
   };
 
-  Object.entries(holdings).forEach(([key, qty]) => {
-    if (qty > 0) {
-      totalAssetValue += qty * findBuyPricePerChi(key);
-    }
+  let buyValueRaw = 0;
+  Object.entries(investMap).forEach(([key, qty]) => {
+    if (qty > 0) buyValueRaw += qty * findBuyPricePerChi(key);
   });
 
+  let giftValueRaw = 0;
+  Object.entries(giftMap).forEach(([key, qty]) => {
+    if (qty > 0) giftValueRaw += qty * findBuyPricePerChi(key);
+  });
+
+  const totalAssetValue = buyValueRaw + giftValueRaw;
+
   // Calculate Breakdown Values
-  const avgMarketPricePerChi = totalQuantity > 0 ? totalAssetValue / totalQuantity : 0;
-  const buyValue = breakdown ? breakdown.buyQty * avgMarketPricePerChi : 0;
-  const giftValue = breakdown ? breakdown.giftQty * avgMarketPricePerChi : 0;
+  // const avgMarketPricePerChi = totalQuantity > 0 ? totalAssetValue / totalQuantity : 0; // Legacy
+  const buyValue = buyValueRaw;
+  const giftValue = giftValueRaw;
 
   const buyPL = buyValue - (breakdown?.buyCost || 0);
   const buyPLPercent = (breakdown?.buyCost || 0) > 0 ? (buyPL / breakdown.buyCost) * 100 : 0;
@@ -170,14 +168,17 @@ export default function Home() {
         {/* 1. Market Prices Section */}
         <MarketPriceBoard prices={prices} loading={false} />
 
-        {/* 2. Gold Price History Chart */}
+        {/* 2. Charts */}
         <GoldPriceChart
           data={historyData}
           loading={historyLoading}
           onRangeChange={handleRangeChange}
+          transactions={transactions}
+          currentBarPrice={(prices.find(p => p.type.includes("SJC (Miếng)"))?.buy || 0) / 10}
+          currentRingPrice={(prices.find(p => p.type.includes("Nhẫn"))?.buy || 0) / 10}
         />
 
-        {/* 2. Portfolio Breakdown */}
+        {/* 3. Portfolio Breakdown */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Investment Portfolio */}
           <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 space-y-4">
@@ -250,7 +251,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 3. Transaction History Section */}
+        {/* 4. Transaction History Section */}
         <div>
           <TransactionHistory transactions={transactions} />
         </div>

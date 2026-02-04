@@ -34,6 +34,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
+import type { Transaction } from "@/store/portfolioStore";
+
 interface HistoryItem {
     date: string;
     type: string;
@@ -43,17 +45,21 @@ interface HistoryItem {
 
 interface GoldPriceChartProps {
     data: HistoryItem[];
+    transactions?: Transaction[];
     loading?: boolean;
     onRangeChange?: (from: string, to: string, label: string) => void;
+    currentBarPrice?: number;
+    currentRingPrice?: number;
 }
 
-export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartProps) {
+export function GoldPriceChart({ data, loading, onRangeChange, transactions = [], currentBarPrice = 0, currentRingPrice = 0 }: GoldPriceChartProps) {
     // Visibility State for Legend Toggling
     const [visibility, setVisibility] = useState<Record<string, boolean>>({
         barBuy: true,
         barSell: true,
         ringBuy: true,
-        ringSell: true
+        ringSell: true,
+        totalAsset: true
     });
 
     const [range, setRange] = useState("30days");
@@ -150,6 +156,7 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
         { key: 'barSell', name: 'SJC Miếng (Bán)', color: '#CA8A04' },
         { key: 'ringBuy', name: 'Nhẫn 9999 (Mua)', color: '#F97316' },
         { key: 'ringSell', name: 'Nhẫn 9999 (Bán)', color: '#C2410C' },
+        { key: 'totalAsset', name: 'Tổng Tài Sản', color: '#10b981' },
     ];
 
     // Toggle Visibility
@@ -161,29 +168,48 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
     const chartData = useMemo(() => {
         if (!data.length) return [];
 
-        const grouped = new Map<string, {
-            rawDate: string;
-            displayDate: string;
-            timestamp: number;
-            barBuy?: number;
-            barSell?: number;
-            ringBuy?: number;
-            ringSell?: number;
-        }>();
+        const sortedHistory = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedTx = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        data.forEach((item) => {
-            const key = item.date;
+        // Backfill Prices (Use BUY price because that's what user sells at)
+        const firstBar = sortedHistory.find(h => h.type === 'bar' && h.buy > 0);
+        const firstRing = sortedHistory.find(h => h.type === 'ring_9999' && h.buy > 0);
 
-            let entry = grouped.get(key);
-            if (!entry) {
-                entry = {
-                    rawDate: key,
-                    displayDate: format(parseISO(key), "dd/MM HH:mm"),
-                    timestamp: new Date(key).getTime(),
-                };
-                grouped.set(key, entry);
+        let lastBarPrice = firstBar ? firstBar.buy : currentBarPrice;
+        let lastRingPrice = firstRing ? firstRing.buy : currentRingPrice;
+
+        let qtyBar = 0;
+        let qtyRing = 0;
+        let txIndex = 0;
+
+        // Process Pre-History Transactions
+        const firstDate = sortedHistory[0].date;
+        while (txIndex < sortedTx.length && sortedTx[txIndex].date < firstDate) {
+            const t = sortedTx[txIndex];
+            if (t.goldType === 'bar') {
+                if (t.type === 'buy' || t.type === 'gift_in') qtyBar += t.quantity;
+                else qtyBar -= t.quantity;
+            } else if (t.goldType === 'ring_9999') {
+                if (t.type === 'buy' || t.type === 'gift_in') qtyRing += t.quantity;
+                else qtyRing -= t.quantity;
             }
+            txIndex++;
+        }
 
+        const dateMap = new Map<string, any>();
+
+        // 1. Group Raw History
+        sortedHistory.forEach(item => {
+            const d = item.date;
+            if (!dateMap.has(d)) {
+                dateMap.set(d, {
+                    rawDate: d,
+                    displayDate: format(parseISO(d), "dd/MM HH:mm"),
+                    fullDate: format(parseISO(d), "dd/MM/yyyy HH:mm"),
+                    timestamp: new Date(d).getTime(),
+                });
+            }
+            const entry = dateMap.get(d);
             if (item.type === "bar") {
                 entry.barBuy = item.buy;
                 entry.barSell = item.sell;
@@ -193,8 +219,36 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
             }
         });
 
-        return Array.from(grouped.values()).sort((a, b) => a.timestamp - b.timestamp);
-    }, [data]);
+        const sortedUniqueDates = Array.from(dateMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+        const result = [];
+
+        // 2. Iterate Unique Dates
+        for (const entry of sortedUniqueDates) {
+            // Update Prices (Use BUY price for Asset Valuation = Liquidation Value)
+            if (entry.barBuy && entry.barBuy > 0) lastBarPrice = entry.barBuy;
+            if (entry.ringBuy && entry.ringBuy > 0) lastRingPrice = entry.ringBuy;
+
+            // Process Transactions
+            const currentDate = entry.rawDate;
+            while (txIndex < sortedTx.length && sortedTx[txIndex].date <= currentDate) {
+                const t = sortedTx[txIndex];
+                if (t.goldType === 'bar') {
+                    if (t.type === 'buy' || t.type === 'gift_in') qtyBar += t.quantity;
+                    else qtyBar -= t.quantity;
+                } else if (t.goldType === 'ring_9999') {
+                    if (t.type === 'buy' || t.type === 'gift_in') qtyRing += t.quantity;
+                    else qtyRing -= t.quantity;
+                }
+                txIndex++;
+            }
+
+            // Calculate Value
+            entry.totalValue = (lastBarPrice * qtyBar) + (lastRingPrice * qtyRing);
+            result.push(entry);
+        }
+
+        return result;
+    }, [data, transactions, currentBarPrice, currentRingPrice]);
 
     if (loading) {
         return (
@@ -294,6 +348,10 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
                                     <stop offset="5%" stopColor="#F97316" stopOpacity={0.3} />
                                     <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
                                 </linearGradient>
+                                <linearGradient id="colorAsset" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/30" />
                             <XAxis
@@ -304,6 +362,7 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
                                 minTickGap={30}
                             />
                             <YAxis
+                                yAxisId="left"
                                 domain={['auto', 'auto']}
                                 tickFormatter={(val) => (val / 1000000).toFixed(1) + 'M'}
                                 tickLine={false}
@@ -311,14 +370,32 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
                                 tick={{ fontSize: 10, fill: '#888' }}
                                 width={40}
                             />
+                            <YAxis
+                                yAxisId="right"
+                                orientation="right"
+                                domain={['auto', 'auto']}
+                                tickFormatter={(val) => (val / 1000000).toFixed(0) + 'M'}
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fontSize: 10, fill: '#10b981' }}
+                                width={40}
+                                hide={!visibility.totalAsset}
+                            />
                             <Tooltip
                                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                 formatter={(value: number | string | undefined) => (value !== undefined && value !== null) ? Number(value).toLocaleString('vi-VN') + ' ₫' : 'N/A'}
+                                labelFormatter={(label, payload) => {
+                                    if (payload && payload.length > 0) {
+                                        return payload[0].payload.fullDate;
+                                    }
+                                    return label;
+                                }}
                                 labelStyle={{ color: '#666', marginBottom: '4px' }}
                             />
 
                             {/* SJC Bar Lines */}
                             <Area
+                                yAxisId="left"
                                 type="monotone"
                                 name="SJC Miếng (Mua)"
                                 dataKey="barBuy"
@@ -331,6 +408,7 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
                                 hide={!visibility.barBuy}
                             />
                             <Area
+                                yAxisId="left"
                                 type="monotone"
                                 name="SJC Miếng (Bán)"
                                 dataKey="barSell"
@@ -344,6 +422,7 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
 
                             {/* Ring Lines */}
                             <Area
+                                yAxisId="left"
                                 type="monotone"
                                 name="Nhẫn 9999 (Mua)"
                                 dataKey="ringBuy"
@@ -356,6 +435,7 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
                                 hide={!visibility.ringBuy}
                             />
                             <Area
+                                yAxisId="left"
                                 type="monotone"
                                 name="Nhẫn 9999 (Bán)"
                                 dataKey="ringSell"
@@ -365,6 +445,21 @@ export function GoldPriceChart({ data, loading, onRangeChange }: GoldPriceChartP
                                 strokeWidth={1}
                                 connectNulls
                                 hide={!visibility.ringSell}
+                            />
+
+                            {/* Asset Area */}
+                            <Area
+                                yAxisId="right"
+                                type="monotone"
+                                name="Tổng Tài Sản"
+                                dataKey="totalValue"
+                                stroke="#10b981"
+                                fillOpacity={1}
+                                fill="url(#colorAsset)"
+                                strokeWidth={2}
+                                activeDot={{ r: 6 }}
+                                connectNulls
+                                hide={!visibility.totalAsset}
                             />
 
                         </AreaChart>
