@@ -12,7 +12,6 @@ export interface GoldPrice {
     updated: string;
 }
 
-// Mock API removed
 export const useGoldPrice = () => {
     const [prices, setPrices] = useState<GoldPrice[]>([]);
     const [loading, setLoading] = useState(true);

@@ -196,7 +196,19 @@ export function GoldPriceChart({ data, loading, onRangeChange, transactions = []
             txIndex++;
         }
 
-        const dateMap = new Map<string, any>();
+        interface ChartDataPoint {
+            rawDate: string;
+            displayDate: string;
+            fullDate: string;
+            timestamp: number;
+            barBuy?: number;
+            barSell?: number;
+            ringBuy?: number;
+            ringSell?: number;
+            totalValue?: number;
+        }
+
+        const dateMap = new Map<string, ChartDataPoint>();
 
         // 1. Group Raw History
         sortedHistory.forEach(item => {
@@ -209,7 +221,7 @@ export function GoldPriceChart({ data, loading, onRangeChange, transactions = []
                     timestamp: new Date(d).getTime(),
                 });
             }
-            const entry = dateMap.get(d);
+            const entry = dateMap.get(d)!;
             if (item.type === "bar") {
                 entry.barBuy = item.buy;
                 entry.barSell = item.sell;
@@ -263,13 +275,7 @@ export function GoldPriceChart({ data, loading, onRangeChange, transactions = []
         );
     }
 
-    if (chartData.length === 0 && !loading) {
-        // Show empty state but keep controls visible if possible, or just null.
-        // For now, allow returning null but better to show "No Data" with controls.
-        // But the previous implementation returned null. I'll stick to it for now but maybe improving UI later.
-        // Actually, if I return null, user can't select another range to fix it.
-        // I should render the card with empty message.
-    }
+
 
     return (
         <Card>

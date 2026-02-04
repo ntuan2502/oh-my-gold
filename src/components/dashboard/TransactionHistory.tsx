@@ -90,7 +90,6 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {
             // 1. Type Filter
-            // 1. Type Filter
             if (filterType === 'buy' && t.type !== 'buy') return false;
             if (filterType === 'sell' && t.type !== 'sell') return false;
             if (filterType === 'gift' && !t.type.startsWith('gift')) return false;

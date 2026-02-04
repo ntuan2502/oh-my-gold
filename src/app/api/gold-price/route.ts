@@ -82,13 +82,7 @@ export async function GET() {
             });
         });
 
-        // Fallback: If Table 0 failed (structure change), try the old text search method
-        if (prices.length === 0) {
-            $('td:contains("SJC")').each(() => {
-                // ... (keep legacy logic as backup or remove if confident)
-                if (prices.length > 0) return; // Just get one if main-table failed
-            });
-        }
+
 
         return NextResponse.json({ data: prices });
 

@@ -46,7 +46,7 @@ export default function Home() {
   };
 
   // Calculate Dynamic Data
-  const { totalQuantity, totalInvested, breakdown } = getHoldings(); // Quantity is in Chi
+  const { totalInvested, breakdown } = getHoldings(); // Quantity is in Chi
 
   // Valuation Logic: 
   // Calculate value by matching specific Type/Brand from transactions to current Market Buy Price.

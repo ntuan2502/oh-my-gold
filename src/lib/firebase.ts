@@ -20,5 +20,3 @@ const googleProvider = new GoogleAuthProvider();
 
 // Export services
 export { app, auth, db, googleProvider };
-
-// Mock Data removed as requested

@@ -35,24 +35,15 @@ export function useGoldHistory() {
             if (!snapshot.empty) {
                 const cachedData = snapshot.docs.map(doc => doc.data() as HistoryItem);
 
-                // Integrity Check:
-                // If we detect abnormally high values (e.g. > 50M per chi, implying Ta unit or error), 
-                // we assume cache is corrupt and force a re-fetch.
-                // Note: 50M/Chi = 500M/Ta. Safe threshold for near/medium future.
+                // Check for outliers (e.g. > 50M/Chi) indicating corrupt cache
                 const hasOutliers = cachedData.some(item => item.buy > MAX_VALID_GOLD_PRICE || item.sell > MAX_VALID_GOLD_PRICE);
 
-                if (hasOutliers) {
-                    console.warn(`[Cache] Detected suspicious data (>${MAX_VALID_GOLD_PRICE}). Invalidating cache and re-fetching...`);
-                    // Do NOT return here. Fall through to API fetch.
-                } else if (cachedData.length > 0) {
-                    console.log(`[Cache] Hit! Loaded ${cachedData.length} records.`);
+                if (!hasOutliers && cachedData.length > 0) {
                     setData(cachedData);
                     setLoading(false);
                     return;
                 }
             }
-
-            console.log("[Cache] Miss. Fetching fresh data from SJC...");
 
             // 1. Call Formatted API
             const res = await fetch(`/api/sjc/formatted?fromDate=${fromDate}&toDate=${toDate}`);
@@ -67,11 +58,9 @@ export function useGoldHistory() {
             // 2. Sync to Firestore (Client-side)
             if (items.length > 0) {
                 const batch = writeBatch(db);
-                let count = 0;
 
                 items.forEach(item => {
                     const dateObj = new Date(item.date);
-                    // ID: bar_20260130_090000
                     const dateKey = format(dateObj, 'yyyyMMdd_HHmmss');
                     const docId = `${item.type}_${dateKey}`;
                     const docRef = doc(db, "gold_price_history", docId);
@@ -81,11 +70,9 @@ export function useGoldHistory() {
                         provider: 'SJC',
                         syncedAt: new Date().toISOString()
                     });
-                    count++;
                 });
 
                 await batch.commit();
-                console.log(`[Sync] Saved ${count} records to Firestore.`);
             }
 
         } catch (error) {
